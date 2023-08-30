@@ -1,53 +1,68 @@
-const getState = ({getStore, getActions, setStore}) => {
+const getState = ({ getStore, getActions, setStore }) => {
 	return {
 		store: {
+			user: null,  // new "store" to save the username or email
 			message: null,
-			demo: [
-				{
-					title: "FIRST",
-					background: "white",
-					initial: "white"
-				},
-				{
-					title: "SECOND",
-					background: "white",
-					initial: "white"
-				}
-			]
+			demo: [{title: "First", background: "white", initial: "white"},
+						 {title: "Second", background: "white", initial: "white"}]
 		},
 		actions: {
-			// Use getActions to call a function within a fuction
-			exampleFunction: () => {
-				getActions().changeColor(0, "green");
+			login: async function login(email, password) {
+				const options = {
+					method: 'POST',
+					body: {
+						email: email,
+						password: password
+					}
+				};
+				const response = await fetch(process.env.BACKEND_URL + '/api/login', options);
+				if (response.ok) {
+					const result = await response.json();
+					localStorage.setItem('jwt', result.access_token);
+				} else {
+					console.log('Error, login not found')
+				}
+			},
+			logout: function logout() {
+				localStorage.removeItem('jwt');
+			},
+			makeRequestWithJWT: async function makeRequestWithJWT() {
+				const options = {
+					method: 'POST',
+					headers: {
+						Authorization: `Bearer ${localStorage.getItem('jwt')}`,
+					}
+				};
+				const response = await fetch(process.env.BACKEND_URL + '/api/protected', options);
+				if (response.ok) {
+					const result = await response.json();
+					return result;
+				} else {
+					console.log('Error, makeRequestWithJWT not found')
+				}
 			},
 			getMessage: async () => {
 				try {
-					// Fetching data from the backend
 					const response = await fetch(process.env.BACKEND_URL + "/api/hello")
-                    if (response.ok) {
-                        const data = await response.json()
-                        setStore({message: data.message})
-                        // Don't forget to return something, that is how the async resolves
-                        return data;
-                    } else {
-                        console.log(response.status, response.statusText)
-                    }
-				} catch(error) {
+					if (response.ok) {
+						const data = await response.json()
+						setStore({ message: data.message })
+						return data;
+					} else {
+						console.log(response.status, response.statusText)
+					}
+				} catch (error) {
 					console.log("Error loading message from backend", error)
 				}
 			},
+			exampleFunction: () => {getActions().changeColor(0, "green");}, // Use getActions to call a function within a fuction
 			changeColor: (index, color) => {
-				// Get the store
-				const store = getStore();
-				// We have to loop the entire demo array to look for the respective index and change its color
+				const store = getStore(); 	// Get the store
 				const demo = store.demo.map((item, i) => {
-					if (i === index) {
-                        item.background = color;
-                    }
+					if (i === index) { item.background = color; }
 					return item;
 				});
-				// Reset the global store
-				setStore({demo: demo});
+				setStore({ demo: demo });  // Reset the global store
 			}
 		}
 	};

@@ -8,6 +8,8 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(50), unique=True, nullable=False)
     password = db.Column(db.String(20), unique=False, nullable=False)
+    is_active = db.Column(db.Boolean, nullable=False)
+    user_role = db.Column(db.Enum('user', 'admin', 'reader', name='user_role'), nullable=False)
     name = db.Column(db.String(60), unique=False, nullable=False)
     phone = db.Column(db.String(15), unique=False)
     # Relationship
@@ -20,6 +22,8 @@ class User(db.Model):
     def serialize(self):
         return {"id": self.id,
                 "email": self.email,
+                "is_active": self.is_active,
+                "user_role": self.user_role,
                 "name": self.name,
                 "phone": self.phone}
 
@@ -66,10 +70,12 @@ class Comment(db.Model):
 
 class Follower(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.ForeignKey('user.id')),
-    user = db.relationship('User')  # Model name
-    follower_id = db.Column(db.ForeignKey('user.id'))
-    follower = db.relationship('User')  # Model name
+    # ForeinKey & relationship
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)  # id 1
+    user = db.relationship('User', foreign_keys=[user_id])
+    # ForeinKey & relationship
+    follower_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)  # id 3
+    follower = db.relationship('User', foreign_keys=[follower_id])
 
     def __repr__(self):
         return f'<User: {self.user_id} | Follower: {self.follower_id}>'

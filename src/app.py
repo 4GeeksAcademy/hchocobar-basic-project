@@ -11,6 +11,7 @@ from api.models import db
 from api.routes import api
 from api.admin import setup_admin
 from api.commands import setup_commands
+from flask_jwt_extended import JWTManager
 
 
 # Starting app
@@ -18,6 +19,7 @@ ENV = "development" if os.getenv("FLASK_DEBUG") == "1" else "production"
 static_file_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../public/')
 app = Flask(__name__)
 app.url_map.strict_slashes = False
+
 # Database condiguration
 db_url = os.getenv("DATABASE_URL")
 if db_url is not None:
@@ -34,6 +36,9 @@ setup_admin(app)  # Add the admin
 setup_commands(app)  # Add the admin
 app.register_blueprint(api, url_prefix='/api')  # Add all endpoints form the API with a "api" prefix
 
+# Setup the Flask-JWT-Extended extension
+app.config["JWT_SECRET_KEY"] = os.environ.get('JWT_SECRET_KEY')
+jwt = JWTManager(app)
 
 # Handle/serialize errors like a JSON object
 @app.errorhandler(APIException)
