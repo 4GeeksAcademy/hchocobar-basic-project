@@ -21,16 +21,26 @@ def login():
     email = request.json.get("email", None)
     password = request.json.get("password", None)
     # verificar en la DB
-    user = db.session.execute(db.select(User).where(User.email, User.password, User.is_active)).scalars()
-    if email != "test" or password != "test":
-        response_body = {"message": "Bad email or password",
-                         "status": "error"}
-        return response_body, 401
+    user = db.one_or_404(db.select(User).filter_by(email=email, password=password, is_active=True),
+                         description=f"Bad email or password or user not active: '{email}'.")
+                         # description=f"No user named '{username}'."
     access_token = create_access_token(identity=email)
     response_body = {"message": "User logged",
                      "status": "ok",
                      "access_token": access_token,
                      "email": email}
+    return response_body, 200
+    
+
+# Protect a route with jwt_required, which will kick out requests without a valid JWT present.
+@api.route("/protected", methods=["GET"])
+@jwt_required()
+def protected():
+    # Access the identity of the current user with get_jwt_identity
+    current_user = get_jwt_identity()
+    response_body = {"message": "User logged",
+                     "status": "ok",
+                     "logged_in_as": current_user}
     return response_body, 200
 
 
@@ -53,6 +63,8 @@ def handle_users():
         request_body = request.get_json()
         user = User(email = request_body["email"],
                     password = request_body["password"],
+                    is_active = request_body["is_active"],
+                    user_role = request_body["user_role"],
                     name = request_body["name"],
                     phone = request_body["phone"],)
         db.session.add(user)
