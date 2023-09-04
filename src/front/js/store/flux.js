@@ -10,6 +10,9 @@ const getState = ({ getStore, getActions, setStore }) => {
 			login: async (email, password) => {
 				const options = {
 					method: 'POST',
+					headers: {
+						"Content-Type": "application/json",
+					},
 					body: JSON.stringify({
 						email: email,
 						password: password
@@ -48,7 +51,14 @@ const getState = ({ getStore, getActions, setStore }) => {
 			},
 			getMessage: async () => {
 				try {
-					const response = await fetch(process.env.BACKEND_URL + "/api/hello")
+					const options = {
+						method: 'GET',
+						headers: {
+							"Content-Type": "application/json",
+						},
+						redirect: 'follow'
+					}
+					const response = await fetch(process.env.BACKEND_URL + "/api/hello", options)
 					if (response.ok) {
 						const data = await response.json()
 						setStore({ message: data.message })
